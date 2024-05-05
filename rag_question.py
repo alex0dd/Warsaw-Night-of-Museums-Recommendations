@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 
@@ -11,13 +12,47 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from utils import load_documents, load_json, write_suggestions_file
 
-top_recommendations = 5
-interests = "culture, art, military, psychology, politcs"
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    # Integer argument for the number of top recommendations
+    parser.add_argument(
+        "--top_recommendations",
+        type=int,
+        default=5,
+        help="Number of top recommendations to return (default: 5)",
+    )
+
+    # String argument for interests; expects a comma-separated list
+    parser.add_argument(
+        "--interests",
+        type=str,
+        default="fashion, colors",
+        help='List of interests separated by commas (default: "fashion, colors")',
+    )
+
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Path to the output file where results will be written",
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+args = parse_args()
+
+output_path = args.output
+top_recommendations = args.top_recommendations
+interests = args.interests
 query = f"Suggest {top_recommendations} events that do not require prior registration, to visit during Museums Night given that my interests are: {interests}."
 
 # Envs
 llm_model_name = os.environ.get("LLM_MODEL", "gpt-4-turbo")
-openai_key_path = os.environ.get("OPENAI_KEY_PATH", "openai_key.json")
+openai_key_path = os.environ.get("OPENAI_KEY_PATH", "keys/openai_key.json")
 
 openai_key = load_json(openai_key_path)["key"]
 documents = load_documents("data/original_program.pdf")
@@ -63,14 +98,4 @@ retrieval_qa = RetrievalQA.from_chain_type(
 # Run the pipeline to get the answer
 output = retrieval_qa({"query": query})
 
-write_suggestions_file(output, "suggestions.html")
-
-# Process the answer
-print(f"Question:\n{query}\n\n")
-print(f"Answer:\n{output['result']}\n\n")
-print("Sources:")
-for source in output["source_documents"]:
-    metadata = source.metadata
-    print(
-        f"{metadata['title']} - {metadata['organizer']} - {metadata['site']} - {metadata['district']} - {metadata['street']}"
-    )
+write_suggestions_file(output, output_path)
