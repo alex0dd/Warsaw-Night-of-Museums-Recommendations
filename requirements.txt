@@ -1,0 +1,3 @@
+py-pdf-parser
+matplotlib
+faiss-cpu
