@@ -1,3 +1,6 @@
 py-pdf-parser
 matplotlib
 faiss-cpu
+langchain
+langchain-community
+langchain-openai
